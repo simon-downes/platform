@@ -1,0 +1,29 @@
+---
+#
+# Create a developers group and a specific user
+#
+
+- name: Ensure "developers" group exists
+  group:
+    name: developers
+    state: present
+
+- name: Adding user {{ developer }}
+  user:
+    name: "{{ developer }}"
+    group: developers
+    shell: /bin/bash
+    password: $5$upTw9yri/QjYb$7yB6g.bGkkWuhTwXsSAkM8N0TsOlgevHg2qJBP6FgG0
+    update_password: on_create
+    groups: sudo
+
+- name: Get list of groups
+  shell: /usr/bin/getent group | awk -F":" '{print $1}'
+  register: etc_groups
+
+- name: Add user {{ developer }} to docker group
+  user:
+    name: "{{ developer }}"
+    groups: docker
+    append: yes
+  when: '"docker" in etc_groups.stdout_lines'

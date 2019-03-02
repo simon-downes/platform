@@ -1,0 +1,36 @@
+---
+#
+# Common tasks performed on newly created dev environment hosts
+#
+
+- name: Ensure Ansible PPA exists
+  become: yes
+  apt_repository:
+    repo: ppa:ansible/ansible
+    state: present
+
+- name: Install dev packages
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - git
+    - ansible
+    - wget
+    - zip
+    - jq
+
+- name: check for terraform
+  become: yes
+  stat:
+    path: /usr/local/bin/terraform
+  register: terraform_exists
+
+- name: Download and Install Terraform
+  unarchive:
+    src: https://releases.hashicorp.com/terraform/0.11.11/terraform_0.11.11_linux_amd64.zip
+    dest: /usr/local/bin
+    remote_src: true
+    creates: /usr/local/bin/terraform
+  when: terraform_exists.stat.exists == False

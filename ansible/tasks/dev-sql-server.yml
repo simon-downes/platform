@@ -1,0 +1,49 @@
+---
+#
+# Installs command-line tools for SQL Server
+#
+
+- name: Add Microsofts' GPG key
+  apt_key:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    state: present
+
+- name: Add Microsoft APT repo
+  apt_repository:
+    repo: "deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod {{ ansible_distribution_release }} main"
+    state: present
+
+- name: Install Microsoft ODBC library and CLI tools
+  package:
+    name: "{{ item }}"
+    state: "present"
+  with_items:
+    - msodbcsql17
+    - mssql-tools
+  environment:
+        ACCEPT_EULA: Y
+
+- name: Create symlinks to SQL Server CLI tools
+  file:
+    src: "/opt/mssql-tools/bin/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+  with_items:
+    - bcp
+    - sqlcmd
+
+# - name: Install ODBC library.
+#   package:
+#     name: unixodbc-dev
+
+# deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod bionic main
+# sudo su
+# curl  | apt-key add -
+# curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+# exit
+# sudo apt-get update
+# sudo ACCEPT_EULA=Y apt-get install
+# echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
+# echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+# source ~/.bashrc
+# sudo apt-get install unixodbc-dev

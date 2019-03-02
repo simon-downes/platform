@@ -1,0 +1,31 @@
+---
+#
+# Common tasks performed on newly created hosts regardless of their intended role(s)
+#
+
+- name: Set hostname
+  hostname:
+    name: "{{ hostname }}"
+
+- name: Update apt
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Install system packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - software-properties-common
+    - ntp
+    - curl
+    - python-pip
+
+- name: Set UTC timezone
+  command: /usr/bin/timedatectl set-timezone UTC
+
+- name: Set default system language pack
+  shell: locale-gen en_GB.UTF-8

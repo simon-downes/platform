@@ -1,0 +1,103 @@
+---
+#
+# Installs PHP 7.3, Composer, PHP Unit and SQLSRV driver
+#
+
+- name: Ensure PHP PPA exists
+  apt_repository:
+    repo: ppa:ondrej/php
+    state: present
+
+- name: Install PHP packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php7.3-cli
+    - php7.3-fpm
+    - php7.3-bcmath
+    - php7.3-curl
+    - php7.3-dev
+    - php7.3-gd
+    - php7.3-json
+    - php7.3-mbstring
+    - php7.3-mysql
+    - php7.3-xml
+    - php-pear
+
+- name: Set php_executable variable to a default if not defined.
+  set_fact:
+    composer_path: /usr/local/bin/composer
+  when: composer_path is not defined
+
+- name: Check for Composer
+  stat:
+    path: "{{ composer_path }}"
+  register: composer_bin
+
+- name: Get Composer installer signature.
+  uri:
+    url: https://composer.github.io/installer.sig
+    return_content: true
+  register: composer_installer_signature
+  when: not composer_bin.stat.exists
+
+- name: Download Composer installer.
+  get_url:
+    url: https://getcomposer.org/installer
+    dest: /tmp/composer-installer.php
+    mode: 0755
+    checksum: "sha384:{{ composer_installer_signature.content }}"
+  when: not composer_bin.stat.exists
+
+- name: Run Composer installer.
+  command: >
+    php composer-installer.php
+    chdir=/tmp
+  when: not composer_bin.stat.exists
+
+- name: Move Composer into globally-accessible location.
+  command: >
+    mv /tmp/composer.phar {{ composer_path }}
+    creates={{ composer_path }}
+  when: not composer_bin.stat.exists
+
+- name: Ensure Composer is the latest version
+  become: yes
+  shell: "{{ composer_path }} self-update"
+  when: composer_bin.stat.exists == True
+
+- name: Download phpunit (7.x)
+  become: yes
+  get_url:
+    url: https://phar.phpunit.de/phpunit-7.phar
+    dest: /usr/local/bin/phpunit
+    mode: 0755
+
+- name: Check for SQL Server CLI tools
+  stat:
+    path: /usr/local/bin/sqlcmd
+  register: sqlcmd_bin
+
+- name: Install ODBC dev package
+  package:
+    name: "unixodbc-dev"
+    state: present
+  when: sqlcmd_bin.stat.exists
+
+- name: "Install SQLSRV driver"
+  become: yes
+  shell: "pecl install {{ item }}"
+  register: pecl_result
+  failed_when: pecl_result.rc >= 2
+  with_items:
+    - sqlsrv
+    - pdo_sqlsrv
+
+# - name: "Install SQLSRV driver"
+#   become: yes
+#   shell: "echo extension=sqlsrv.so >> `php --ini | grep \"Scan for additional .ini files\" | sed -e \"s|.*:\s*||\"`/20-sqlsrv.ini"
+
+# - name: "Install SQLSRV driver"
+#   become: yes
+#   shell: "echo extension=pdo_sqlsrv.so >> `php --ini | grep \"Scan for additional .ini files\" | sed -e \"s|.*:\s*||\"`/25-pdo_sqlsrv.ini"

@@ -25,7 +25,7 @@
     - php7.3-xml
     - php-pear
 
-- name: Set php_executable variable to a default if not defined.
+- name: Set composer_path if not defined
   set_fact:
     composer_path: /usr/local/bin/composer
   when: composer_path is not defined
@@ -85,7 +85,7 @@
     state: present
   when: sqlcmd_bin.stat.exists
 
-- name: "Install SQLSRV driver"
+- name: "Install SQLSRV driver pecl packages"
   become: yes
   shell: "pecl install {{ item }}"
   register: pecl_result
@@ -94,10 +94,26 @@
     - sqlsrv
     - pdo_sqlsrv
 
-# - name: "Install SQLSRV driver"
-#   become: yes
-#   shell: "echo extension=sqlsrv.so >> `php --ini | grep \"Scan for additional .ini files\" | sed -e \"s|.*:\s*||\"`/20-sqlsrv.ini"
+- name: Enable SQLSRV driver extensions
+  command: >
+    echo "" > /etc/php/7.3/mods-available/{{ item }}.ini
+  args:
+    creates: "/etc/php/7.3/mods-available/{{ item }}.ini"
+  with_items:
+    - sqlsrv
+    - pdo_sqlsrv
 
-# - name: "Install SQLSRV driver"
-#   become: yes
-#   shell: "echo extension=pdo_sqlsrv.so >> `php --ini | grep \"Scan for additional .ini files\" | sed -e \"s|.*:\s*||\"`/25-pdo_sqlsrv.ini"
+- name: Create SQLSRV modules
+  lineinfile:
+    path: "/etc/php/7.3/mods-available/{{ item }}.ini"
+    line: "extension={{ item }}.so"
+    create: yes
+  with_items:
+    - sqlsrv
+    - pdo_sqlsrv
+
+- name: Enable SQLSRV modules
+  command: "phpenmod {{ item }}"
+  with_items:
+    - sqlsrv
+    - pdo_sqlsrv

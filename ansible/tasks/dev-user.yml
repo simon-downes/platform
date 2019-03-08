@@ -8,14 +8,19 @@
     name: developers
     state: present
 
-- name: Adding user {{ developer }}
+- name: Configure user {{ developer }}
   user:
     name: "{{ developer }}"
     group: developers
     shell: /bin/bash
-    password: $5$upTw9yri/QjYb$7yB6g.bGkkWuhTwXsSAkM8N0TsOlgevHg2qJBP6FgG0
+    password: "{{ user_password }}"
     update_password: on_create
     groups: sudo
+    append: yes
+    generate_ssh_key: yes
+    ssh_key_bits: 4096
+    ssh_key_comment: "{{ developer }}@{{ hostname }}"
+  register: dev_user
 
 - name: Get list of groups
   shell: /usr/bin/getent group | awk -F":" '{print $1}'
@@ -27,3 +32,38 @@
     groups: docker
     append: yes
   when: '"docker" in etc_groups.stdout_lines'
+
+- name: Authorize ssh key with GitHub
+  local_action:
+    module: github_key
+    name: "{{ developer }}@{{ hostname }}"
+    token: "{{ github_access_token }}"
+    pubkey: "{{ dev_user.ssh_public_key }}"
+
+- name: Ensure GitHub SSH host key known
+  become: yes
+  become_user: "{{ developer }}"
+  known_hosts:
+    name: github.com
+    key: "{{ lookup('pipe', 'ssh-keyscan -H github.com') }}"
+
+- name: Download dotfiles
+  become: yes
+  become_user: "{{ developer }}"
+  git:
+    repo: "git@github.com:simon-downes/dotfiles.git"
+    dest: ~/dotfiles
+    update: no
+
+- name: Get bashrc status
+  become: yes
+  become_user: "{{ developer }}"
+  stat:
+    path: ~/.bashrc
+  register: bashrc
+
+- name: Install dotfiles
+  become: yes
+  become_user: "{{ developer }}"
+  shell: "~/dotfiles/bin/install"
+  when: bashrc.stat.islnk == False

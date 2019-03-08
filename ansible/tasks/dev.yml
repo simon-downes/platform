@@ -15,19 +15,20 @@
     name: "{{ item }}"
     state: present
   with_items:
+    - supervisor
     - git
     - ansible
     - wget
     - zip
     - jq
 
-- name: check for terraform
+- name: Check for Terraform
   become: yes
   stat:
     path: /usr/local/bin/terraform
   register: terraform_exists
 
-- name: Download and Install Terraform
+- name: Download and install Terraform
   unarchive:
     src: https://releases.hashicorp.com/terraform/0.11.11/terraform_0.11.11_linux_amd64.zip
     dest: /usr/local/bin

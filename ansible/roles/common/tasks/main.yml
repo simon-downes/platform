@@ -1,0 +1,35 @@
+
+- name: Set hostname
+  hostname:
+    name: "{{ hostname }}"
+
+- name: Update apt
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Install system packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - software-properties-common
+    - chrony
+    - logrotate
+    - curl
+    - python3-pip
+    - wget
+
+- name: Set timezone to UTC
+  timezone:
+    name: Etc/UTC
+
+- name: Ensure the en_GB locale exists
+  locale_gen:
+    name: en_GB.UTF-8
+    state: present
+
+- name: Set en_GB as default locale
+  command: update-locale LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8

@@ -4,25 +4,30 @@
 #
 
 - name: Ensure PHP PPA exists
+  become: yes
   apt_repository:
     repo: ppa:ondrej/php
     state: present
 
 - name: Install PHP packages
+  become: yes
   package:
     name: "{{ item }}"
     state: present
-  with_items:
-    - php7.3-cli
-    - php7.3-fpm
-    - php7.3-bcmath
-    - php7.3-curl
-    - php7.3-dev
-    - php7.3-gd
-    - php7.3-json
-    - php7.3-mbstring
-    - php7.3-mysql
-    - php7.3-xml
+  loop:
+    - php7.4-cli
+    - php7.4-fpm
+    - php7.4-bcmath
+    - php7.4-curl
+    - php7.4-dev
+    - php7.4-gd
+    - php7.4-json
+    - php7.4-mbstring
+    - php7.4-mysql
+    - php7.4-pgsql
+    - php7.4-sqlite3
+    - php7.4-xml
+    - php7.4-zip
     - php-pear
 
 - name: Set composer_path if not defined
@@ -35,14 +40,14 @@
     path: "{{ composer_path }}"
   register: composer_bin
 
-- name: Get Composer installer signature.
+- name: Get Composer installer signature
   uri:
     url: https://composer.github.io/installer.sig
     return_content: true
   register: composer_installer_signature
   when: not composer_bin.stat.exists
 
-- name: Download Composer installer.
+- name: Download Composer installer
   get_url:
     url: https://getcomposer.org/installer
     dest: /tmp/composer-installer.php
@@ -50,16 +55,18 @@
     checksum: "sha384:{{ composer_installer_signature.content }}"
   when: not composer_bin.stat.exists
 
-- name: Run Composer installer.
-  command: >
-    php composer-installer.php
-    chdir=/tmp
+- name: Run Composer installer
+  become: yes
+  command:
+    cmd: php composer-installer.php
+    chdir: /tmp
   when: not composer_bin.stat.exists
 
-- name: Move Composer into globally-accessible location.
-  command: >
-    mv /tmp/composer.phar {{ composer_path }}
-    creates={{ composer_path }}
+- name: Move Composer into globally-accessible location
+  become: yes
+  command:
+    cmd: mv /tmp/composer.phar {{ composer_path }}
+    #creates={{ composer_path }}
   when: not composer_bin.stat.exists
 
 - name: Ensure Composer is the latest version
@@ -67,53 +74,9 @@
   shell: "{{ composer_path }} self-update"
   when: composer_bin.stat.exists == True
 
-- name: Download phpunit (7.x)
+- name: Download phpunit (9.x)
   become: yes
   get_url:
-    url: https://phar.phpunit.de/phpunit-7.phar
+    url: https://phar.phpunit.de/phpunit-9.phar
     dest: /usr/local/bin/phpunit
     mode: 0755
-
-- name: Check for SQL Server CLI tools
-  stat:
-    path: /usr/local/bin/sqlcmd
-  register: sqlcmd_bin
-
-- name: Install ODBC dev package
-  package:
-    name: "unixodbc-dev"
-    state: present
-  when: sqlcmd_bin.stat.exists
-
-- name: "Install SQLSRV driver pecl packages"
-  become: yes
-  shell: "pecl install {{ item }}"
-  register: pecl_result
-  failed_when: pecl_result.rc >= 2
-  with_items:
-    - sqlsrv
-    - pdo_sqlsrv
-
-- name: Enable SQLSRV driver extensions
-  command: >
-    echo "" > /etc/php/7.3/mods-available/{{ item }}.ini
-  args:
-    creates: "/etc/php/7.3/mods-available/{{ item }}.ini"
-  with_items:
-    - sqlsrv
-    - pdo_sqlsrv
-
-- name: Create SQLSRV modules
-  lineinfile:
-    path: "/etc/php/7.3/mods-available/{{ item }}.ini"
-    line: "extension={{ item }}.so"
-    create: yes
-  with_items:
-    - sqlsrv
-    - pdo_sqlsrv
-
-- name: Enable SQLSRV modules
-  command: "phpenmod {{ item }}"
-  with_items:
-    - sqlsrv
-    - pdo_sqlsrv

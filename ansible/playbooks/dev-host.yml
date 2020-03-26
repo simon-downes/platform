@@ -1,26 +1,26 @@
 ---
-- hosts: developers
+- hosts: dev
+  name: Setup and configure developer server
   serial: 1
   gather_facts: false
   any_errors_fatal: true
-  become: yes
   become_user: root
 
   vars:
     hostname: "{{ developer }}-dev"
 
   pre_tasks:
-
     - name: Ensure python is installed
-      raw: test -e /usr/bin/python || (apt-get -y update && apt-get -y install python)
+      raw: test -e /usr/bin/python3 || (apt-get -y update && apt-get -y install python)
       changed_when: false
-
     - setup: # aka gather_facts
 
   tasks:
-    # - import_tasks: ../tasks/common.yml
+    #- import_tasks: ../tasks/common.yml
+    #- import_tasks: ../tasks/dev-common.yml
+    #- import_tasks: ../tasks/dev-platform.yml
+    - import_tasks: ../tasks/php.yml
     # - import_tasks: ../tasks/docker.yml
     # - import_tasks: ../tasks/dev.yml
     # - import_tasks: ../tasks/dev-user.yml
     # - import_tasks: ../tasks/dev-sql-server.yml
-    - import_tasks: ../tasks/php.yml

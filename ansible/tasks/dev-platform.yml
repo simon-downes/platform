@@ -1,0 +1,32 @@
+---
+#
+# Config tools geared toward platform/infrastructure development
+#
+
+- name: Ensure Ansible PPA exists
+  become: yes
+  apt_repository:
+    repo: ppa:ansible/ansible
+    state: present
+
+- name: Install Ansible
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - ansible
+
+- name: Install Terraform
+  become: yes
+  unarchive:
+    src: https://releases.hashicorp.com/terraform/0.12.24/terraform_0.12.24_linux_amd64.zip
+    dest: /usr/local/bin
+    remote_src: true
+    creates: /usr/local/bin/terraform
+
+- name: Install AWS CLI v2
+  become: yes
+  shell:
+    cmd: "cd /tmp && curl \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip\" -o \"awscliv2.zip\" && unzip awscliv2.zip && sudo ./aws/install && rm ./awscliv2.zip && rm -rf ./aws"
+    creates: /usr/local/bin/aws

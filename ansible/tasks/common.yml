@@ -13,19 +13,31 @@
     update_cache: yes
 
 - name: Install system packages
+  become: yes
   package:
     name: "{{ item }}"
     state: present
-  with_items:
+  loop:
     - apt-transport-https
     - ca-certificates
     - software-properties-common
-    - ntp
+    - chrony
+    - logrotate
     - curl
-    - python-pip
+    - python3-pip
+    - wget
 
-- name: Set UTC timezone
-  command: /usr/bin/timedatectl set-timezone UTC
+- name: Set timezone to UTC
+  become: yes
+  timezone:
+    name: Etc/UTC
 
-- name: Set default system language pack
-  shell: locale-gen en_GB.UTF-8
+- name: Ensure the en_GB locale exists
+  become: yes
+  locale_gen:
+    name: en_GB.UTF-8
+    state: present
+
+- name: Set en_GB as default locale
+  become: yes
+  command: update-locale LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8

@@ -1,0 +1,31 @@
+---
+#
+# Common tasks performed on newly created dev environment hosts
+#
+
+- name: Install common dev packages
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - supervisor
+    - git
+    - wget
+    - zip
+    - jq
+
+- name: Check for dotfiles
+  stat:
+    path: ~/dotfiles
+  register: dotfiles_path
+
+- name: Download dotfiles
+  git:
+    repo: https://github.com/simon-downes/dotfiles.git
+    dest: ~/dotfiles
+  when: dotfiles_path.stat.exists == False
+
+- name: Install dotfiles
+  command: ~/dotfiles/bin/install
+  when: dotfiles_path.stat.exists == False

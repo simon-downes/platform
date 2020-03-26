@@ -3,35 +3,35 @@
 # Installs command-line tools for SQL Server
 #
 
-- name: Add Microsofts' GPG key
+- name: Add Microsoft's GPG key
+  become: yes
   apt_key:
     url: https://packages.microsoft.com/keys/microsoft.asc
     state: present
 
-- name: Add Microsoft APT repo
+- name: Add Microsoft Apt repo
+  become: yes
   apt_repository:
-    repo: "deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod {{ ansible_distribution_release }} main"
+    repo: "deb [arch=amd64] https://packages.microsoft.com/ubuntu/{{ ansible_distribution_version }}/prod {{ ansible_distribution_release }} main"
     state: present
 
 - name: Install Microsoft ODBC library and CLI tools
+  become: yes
   package:
     name: "{{ item }}"
     state: "present"
-  with_items:
+  loop:
     - msodbcsql17
     - mssql-tools
   environment:
         ACCEPT_EULA: Y
 
 - name: Create symlinks to SQL Server CLI tools
+  become: yes
   file:
     src: "/opt/mssql-tools/bin/{{ item }}"
     dest: "/usr/local/bin/{{ item }}"
     state: link
-  with_items:
+  loop:
     - bcp
     - sqlcmd
-
-# - name: Install ODBC library.
-#   package:
-#     name: unixodbc-dev

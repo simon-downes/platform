@@ -16,11 +16,11 @@
     - setup: # aka gather_facts
 
   tasks:
-    #- import_tasks: ../tasks/common.yml
-    #- import_tasks: ../tasks/dev-common.yml
-    #- import_tasks: ../tasks/dev-platform.yml
+    - import_tasks: ../tasks/common.yml
+    - import_tasks: ../tasks/dev-common.yml
+    - import_tasks: ../tasks/dev-platform.yml
     - import_tasks: ../tasks/php.yml
+    - import_tasks: ../tasks/dev-sql-server.yml
     # - import_tasks: ../tasks/docker.yml
     # - import_tasks: ../tasks/dev.yml
     # - import_tasks: ../tasks/dev-user.yml
-    # - import_tasks: ../tasks/dev-sql-server.yml

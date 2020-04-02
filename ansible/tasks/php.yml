@@ -1,6 +1,6 @@
 ---
 #
-# Installs PHP 7.3, Composer, PHP Unit and SQLSRV driver
+# Installs PHP 7.4, Composer and PHP Unit
 #
 
 - name: Ensure PHP PPA exists
@@ -66,7 +66,6 @@
   become: yes
   command:
     cmd: mv /tmp/composer.phar {{ composer_path }}
-    #creates={{ composer_path }}
   when: not composer_bin.stat.exists
 
 - name: Ensure Composer is the latest version

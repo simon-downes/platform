@@ -26,6 +26,11 @@
     dest: ~/dotfiles
   when: dotfiles_path.stat.exists == False
 
+- name: Get bashrc status
+  stat:
+    path: ~/.bashrc
+  register: bashrc
+
 - name: Install dotfiles
-  command: ~/dotfiles/bin/install
-  when: dotfiles_path.stat.exists == False
+  shell: "~/dotfiles/bin/install"
+  when: bashrc.stat.islnk == False

@@ -1,13 +1,13 @@
 ---
-- hosts: dev
+- hosts: "simon-dev"
   name: Setup and configure developer server
   serial: 1
   gather_facts: false
   any_errors_fatal: true
   become_user: root
 
-  vars:
-    hostname: "{{ developer }}-dev"
+  vars_files:
+    - ../secrets.yml
 
   pre_tasks:
     - name: Ensure python is installed
@@ -22,3 +22,4 @@
     - import_tasks: ../tasks/php.yml
     #- import_tasks: ../tasks/dev-sql-server.yml
     - import_tasks: ../tasks/containers.yml
+    #- import_tasks: ../tasks/mariadb.yml

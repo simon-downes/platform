@@ -1,2 +1,13 @@
 ansible/secrets.yml
 ansible/*.retry
+
+# terraform backend config
+terraform/backend.tfvars
+
+# local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+

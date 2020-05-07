@@ -15,30 +15,13 @@ terraform {
 }
 
 provider "aws" {
-  region = var.state_region
-}
-
-# ------------------------------------------------------------------------------
-# the variables given below are populated via the backend.tfvars file
-# see README.md for details
-# ------------------------------------------------------------------------------
-
-variable "state_region" {
-  type = string
-}
-
-variable "state_bucket" {
-  type = string
-}
-
-variable "state_locktable" {
-  type = string
+  region = var.region
 }
 
 # S3 bucket for storing state files
 resource "aws_s3_bucket" "terraform_state" {
 
-  bucket = var.state_bucket
+  bucket = var.bucket
   acl    = "private"
 
   # we want full revision history of our state files
@@ -59,7 +42,7 @@ resource "aws_s3_bucket" "terraform_state" {
 
 # DynamoDB table for handling locks
 resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.state_locktable
+  name         = var.dynamodb_table
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
   attribute {

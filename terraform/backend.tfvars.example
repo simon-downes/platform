@@ -1,19 +1,13 @@
 #
 # This file contains the names of the S3 bucket and DynamoDB table used to
-# store Terraform state and locking information respectively.
+# store Terraform state and locking information respectively, along with the
+# region in which those resources will be provisioned.
 #
 # It should be renamed to remove the example suffix and then then desired values
 # entered. These will then be used by the global/state definition file and should
 # also be passed as a backend configuration file during calls to terraform init
 #
 
-# these are used to create the initial state resources
-state_bucket    = ""
-state_locktable = ""
-state_region    = "eu-west-2"
-
-# these are used by subsequent calls to terraform init -backend-config=
-# and correspond to the variables above
 bucket         = ""
 dynamodb_table = ""
-region         = ""
+region         = "eu-west-2"

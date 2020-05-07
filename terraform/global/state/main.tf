@@ -40,6 +40,18 @@ resource "aws_s3_bucket" "terraform_state" {
 
 }
 
+# we want to ensure the bucket can't be made publically accessible
+resource "aws_s3_bucket_public_access_block" "example" {
+
+  bucket = aws_s3_bucket.terraform_state.id
+
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+}
+
 # DynamoDB table for handling locks
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = var.dynamodb_table

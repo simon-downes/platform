@@ -37,34 +37,21 @@ data "gandi_zone" "dns_zone" {
 # First we sort the SSL certificate for the domain
 # ------------------------------------------------------------------------------
 
-# we only need to generate a certificate for the root domain as we handle
-# www.domain.com -> domain.com redirects via Gandi
-# we're using the aliased aws provider to create the certificate in us-east-1
-resource "aws_acm_certificate" "cert" {
-  provider          = aws.acm_provider
-  domain_name       = var.website_domain
-  validation_method = "DNS"
-}
+module "acm_gandi" {
 
-# add the validation records to Gandi
-# the name of the DNS record includes the full domain so we need to strip that part
-resource "gandi_zonerecord" "dns_validation" {
-  zone   = data.gandi_zone.dns_zone.id
-  name   = replace(aws_acm_certificate.cert.domain_validation_options.0.resource_record_name, ".${var.website_domain}.", "")
-  type   = aws_acm_certificate.cert.domain_validation_options.0.resource_record_type
-  ttl    = 300
-  values = [aws_acm_certificate.cert.domain_validation_options.0.resource_record_value]
-}
+  source = "../modules/acm_gandi"
 
-# wait for the validation to complete
-resource "aws_acm_certificate_validation" "cert_validation" {
-  provider        = aws.acm_provider
-  certificate_arn = aws_acm_certificate.cert.arn
-  depends_on = [
-    gandi_zonerecord.dns_validation,
-  ]
-}
+  # specify providers explicitly as we want the module to use the acm_provider
+  providers = {
+    aws   = aws.acm_provider
+    gandi = gandi
+  }
 
+  # we only need to generate a certificate for the root domain as we handle
+  # www.domain.com -> domain.com redirects via Gandi manually
+  cert_domain = var.website_domain
+
+}
 
 # ------------------------------------------------------------------------------
 # Next we create the S3 buckets for hosting
@@ -185,7 +172,7 @@ resource "aws_cloudfront_distribution" "cf_distro" {
 
   viewer_certificate {
     cloudfront_default_certificate = false
-    acm_certificate_arn      = aws_acm_certificate_validation.cert_validation.certificate_arn
+    acm_certificate_arn      = module.acm_gandi.cert_arn
     minimum_protocol_version = "TLSv1.2_2018"
     ssl_support_method       = "sni-only"
   }

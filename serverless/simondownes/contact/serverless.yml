@@ -22,7 +22,7 @@ org: simondownes
 
 provider:
   name: aws
-  runtime: python3.8
+  runtime: python3.6
 
   stage: 'dev'
   region: eu-west-2
@@ -34,9 +34,8 @@ provider:
         - ses:SendRawEmail
       Resource: "*"
 
-# you can define service wide environment variables here
-#  environment:
-#    variable1: value1
+  environment:
+    RECAPTCHA_SECRET: ${env:RECAPTCHA_SECRET}
 
 # you can add packaging information here
 #package:
@@ -59,3 +58,6 @@ functions:
           response:
             headers:
               "Access-Control-Allow_Origin": "'*'"
+
+plugins:
+  - serverless-python-requirements

@@ -1,7 +1,7 @@
 import os
-import json
 import re
 import boto3
+import requests
 
 from botocore.exceptions import ClientError
 from botocore.exceptions import ParamValidationError
@@ -18,15 +18,20 @@ def sendEmail( event, context ):
 
     request = lambda_proxy.Request(event)
 
-    print('request', request.__dict__)
+    print('Request', request.__dict__)
 
     data = {
         'name': request.data.get('name'),
         'email': request.data.get('email'),
         'message': request.data.get('message'),
+        'captcha': request.data.get('captcha'),
     }
 
-    errors = validate(data)
+    try:
+        errors = validate(data)
+    except ValueError as e:
+        print('Validation Error', e)
+        return response(SERVER_ERROR)
 
     if errors:
         return response(CLIENT_ERROR, errors)
@@ -56,7 +61,7 @@ def sendEmail( event, context ):
         )
 
     except (ClientError, ParamValidationError) as e:
-        print(e)
+        print('SES Error', e)
         return response(SERVER_ERROR)
 
     return response(SUCCESS)
@@ -75,7 +80,33 @@ def validate( data ):
     if not errors.get('email') and not re.match("^[^@]+@[^@]+\.[^@.]+$", data['email']):
         errors['email'] = 'Invalid email address'
 
+    # only do captcha validation if no other errors as we can only validate it once
+    if not errors and not validateCaptcha(data['captcha']):
+        errors['captcha'] = 'Invalid captcha response'
+
     return errors
+
+def validateCaptcha( captchaResponse ):
+
+    RECAPTCHA_SECRET = os.environ.get('RECAPTCHA_SECRET')
+
+    response = requests.post(
+        'https://www.google.com/recaptcha/api/siteverify',
+        data = {
+            'secret': RECAPTCHA_SECRET,
+            'response': captchaResponse,
+        }
+    )
+
+    if not response.ok:
+        return False
+
+    data = response.json()
+
+    print('Captcha Response', data)
+
+    return data['success']
+
 
 def response( statusCode, errors = None ):
 

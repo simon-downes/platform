@@ -1,6 +1,6 @@
 ---
 #
-# Common tasks performed on newly created dev environment hosts
+# Common tasks performed on all dev environment hosts
 #
 
 - name: Install common dev packages
@@ -9,10 +9,7 @@
     name: "{{ item }}"
     state: present
   loop:
-    - supervisor
     - git
-    - wget
-    - zip
     - jq
 
 - name: Check for dotfiles

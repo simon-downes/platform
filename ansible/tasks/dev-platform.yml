@@ -3,11 +3,17 @@
 # Config tools geared toward platform/infrastructure development
 #
 
+# check if ansible is already installed
+- command: dpkg-query -W 'ansible'
+  ignore_errors: True
+  register: is_ansible
+
 - name: Ensure Ansible PPA exists
   become: yes
   apt_repository:
     repo: ppa:ansible/ansible
     state: present
+  when: is_ansible is failed
 
 - name: Install Ansible
   become: yes
@@ -16,11 +22,12 @@
     state: present
   loop:
     - ansible
+  when: is_ansible is failed
 
 - name: Install Terraform
   become: yes
   unarchive:
-    src: https://releases.hashicorp.com/terraform/0.12.24/terraform_0.12.24_linux_amd64.zip
+    src: https://releases.hashicorp.com/terraform/0.12.28/terraform_0.12.28_linux_amd64.zip
     dest: /usr/local/bin
     remote_src: true
     creates: /usr/local/bin/terraform

@@ -1,0 +1,22 @@
+---
+#
+# Installs Go
+#
+
+- name: Install Go
+  become: yes
+  unarchive:
+    src: https://golang.org/dl/go1.14.6.linux-amd64.tar.gz
+    dest: /usr/local/
+    remote_src: true
+    creates: /usr/local/go
+
+- name: Create symbolic links to go binaries 
+  become: yes
+  file:
+    src: /usr/local/go/bin/{{ item }}
+    dest: /usr/local/bin/{{ item }}
+    state: link
+  with_items:
+    - go
+    - gofmt

@@ -1,11 +1,7 @@
 ---
 #
-# Common tasks performed on newly created hosts regardless of their intended role(s)
+# Common tasks performed on all hosts regardless of their intended role(s)
 #
-
-- name: Set hostname
-  hostname:
-    name: "{{ hostname }}"
 
 - name: Update apt
   become: yes
@@ -21,23 +17,8 @@
     - apt-transport-https
     - ca-certificates
     - software-properties-common
-    - chrony
-    - logrotate
-    - curl
     - python3-pip
+    - curl
     - wget
+    - zip
 
-- name: Set timezone to UTC
-  become: yes
-  timezone:
-    name: Etc/UTC
-
-- name: Ensure the en_GB locale exists
-  become: yes
-  locale_gen:
-    name: en_GB.UTF-8
-    state: present
-
-- name: Set en_GB as default locale
-  become: yes
-  command: update-locale LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8
